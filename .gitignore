@@ -1,0 +1,59 @@
+########## Node / npm ############
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json        # 如用 pnpm/yarn 可保留
+yarn.lock                # 如用 npm 可保留
+.pnpm-store/
+
+########## Electron 构建产物 ######
+out/                     # electron-builder / electron-forge
+dist/                    # webpack/vite 输出
+build/                   # 自定义构建目录
+release/                 # electron-builder release 子目录
+*.asar                   # 打包后的 asar 文件
+
+########## 原生模块 & 缓存 ######
+.node-gyp/
+.node_repl_history
+.nyc_output
+coverage/
+*.tgz                    # npm pack 产出
+.electron-cache/         # electron-download 缓存
+
+########## 环境 & 密钥 ##########
+.env
+.env.local
+.env.*.local
+*.pem                    # 自签名证书
+*.p12                    # macOS 签名证书
+*.key
+*.crt
+signing/                 # 统一放签名文件目录
+
+########## OS 垃圾 ###############
+.DS_Store
+Thumbs.db
+desktop.ini
+
+########## IDE / 编辑器 ##########
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+.project
+.settings/
+.metadata/
+bin/                     # Eclipse 默认输出
+
+########## 临时文件 ###############
+*.tmp
+*.temp
+*.log
+*.pid
+*.seed
+*.tlog
