@@ -1,10 +1,15 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
+require('dotenv/config')
+// const { MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY, MAIN_WINDOW_WEBPACK_ENTRY} = require('@electron-forge/plugin-webpack/lib/utils/webpack-paths')
+
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
   app.quit();
 }
+
+ipcMain.handle('get-env', (e, key) => process.env[key]);
 
 const createWindow = () => {
   // Create the browser window.
@@ -13,8 +18,12 @@ const createWindow = () => {
     height: 600,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
+      // nodeIntegration: true,
+      contextIsolation: true,
     },
   });
+
+  const devUrl = 'http://localhost:3000/main_window';
 
   // and load the index.html of the app.
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);

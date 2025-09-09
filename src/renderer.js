@@ -26,6 +26,8 @@
  * ```
  */
 
-import './index.css';
+const info = document.getElementById('info');
+window.env.get('OSS_KEY').then( str => {
+    info.innerText = `${str}`
+})
 
-console.log('👋 This message is being logged by "renderer.js", included via webpack');
