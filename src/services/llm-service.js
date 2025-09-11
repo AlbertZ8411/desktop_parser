@@ -13,10 +13,9 @@ class LLMService {
         this.client = new OpenAI({
             apiKey: options.apiKey,
             baseURL: options.baseUrl || 'http://localhost:11434/v1',
-            timeout: options.timeout || 60000,
-            maxRetries: options.maxRetries || 0
         });
-
+        console.log(`apiKey:: ${options.apiKey}`)
+        this.baseUrl = options.baseUrl;
         this.model = options.model || 'gpt-oss:20b';
         this.maxTokens = options.maxTokens || 4000;
         this.defaultTemperature = options.temperature || 0.3;
@@ -29,66 +28,55 @@ class LLMService {
      * @param {Object} options
      * @returns {Promise<Object>}
      */
-    async query(systemPrompt, userContent, options = {}) {
-        const {
-            temperature = this.defaultTemperature,
-            maxTokens = this.maxTokens,
-            responseFormat = null,
-            extraMessages = []
-        } = options;
-
+    async query(systemPrompt, userPrompt, options = {}) {
         try {
-
+            // Create messages array for OpenAI format
             const messages = [
                 { role: "system", content: systemPrompt },
-                { role: "user", content: userContent }
+                { role: "user", content: userPrompt }
             ];
 
-            if (extraMessages && extraMessages.length > 0) {
-                messages.push(...extraMessages);
-            }
+            console.log(`Sending query to LLM with ${messages.length} messages`);
 
-            const requestConfig = {
+            // Call the API
+            const response = await this.client.chat.completions.create({
                 model: this.model,
                 messages: messages,
-                max_tokens: maxTokens,
-                temperature: temperature
-            };
+                temperature: options.temperature || this.defaultTemperature,
+                max_tokens: options.maxTokens || this.maxTokens
+            });
 
-            if (responseFormat) {
-                requestConfig.response_format = responseFormat;
-            }
+            // Log response info
+            console.log(`Received response with ${response.choices?.length || 0} choices`);
 
-            const response = await this.client.chat.completions.create(requestConfig);
+            // Extract the content from the response
+            const content = response.choices?.[0]?.message?.content || "";
 
-            const content = response.choices[0].message.content;
+            console.log(`Response content length: ${content.length}`);
 
-            if (responseFormat && responseFormat.type === 'json_object') {
-                try {
-                    return {
-                        success: true,
-                        data: typeof content === 'string' ? JSON.parse(content) : content
-                    };
-                } catch (e) {
-                    return {
-                        success: false,
-                        error: 'JSON parsing failed',
-                        rawContent: content
-                    };
-                }
-            }
-
-            return {
-                success: true,
-                data: content
-            };
+            // Return just the content string
+            return content;
         } catch (error) {
-            console.error('LLM request failed:', error);
-            return {
-                success: false,
-                error: error.message || 'unknown error',
-                details: error.error?.message || error.error
-            };
+            console.error("LLM query error:", error);
+            throw error;
+        }
+    }
+
+
+    async checkAvailability() {
+        try {
+            const response = await fetch(`http://localhost:11434/api/version`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                timeout: 5000 // 5 秒超时
+            });
+
+            return response.ok;
+        } catch (error) {
+            console.error('LLM service availability check failed:', error);
+            return false;
         }
     }
 

@@ -1,13 +1,49 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Hello World!</title>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Analysis Application</title>
+</head>
+<body>
+<header class="app-header">
+  <h1>Document Analysis Tool</h1>
+  <div id="llm-status" class="status pending">Checking LLM service...</div>
+</header>
 
-  </head>
-  <body>
-    <h1>💖 Hello World!</h1>
-    <p>Welcome to your Electron application.</p>
-  </body>
-  <p id="info"></p>
+<main class="app-container">
+  <section class="control-panel">
+    <div class="button-group">
+      <button id="upload-btn" class="primary-btn">Upload Document</button>
+      <select id="analysis-type" class="select-input">
+        <option value="general">General Analysis</option>
+        <option value="entities">Entity Extraction</option>
+        <option value="summary">Document Summary</option>
+      </select>
+      <button id="analyze-btn" class="primary-btn" disabled>Analyze Document</button>
+      <button id="save-btn" class="secondary-btn" disabled>Save Results</button>
+    </div>
+
+    <div id="status-message" class="message"></div>
+    <div id="loading-spinner" class="spinner hidden" role="status" aria-hidden="true"></div>
+  </section>
+
+  <section class="document-section">
+    <h2>Document Information</h2>
+    <div id="document-info" class="info-container">
+      <p class="no-document">No document loaded. Please upload a document to begin.</p>
+    </div>
+  </section>
+
+  <section id="results-container" class="results-section hidden">
+    <!-- Results will be dynamically inserted here by renderer.js -->
+  </section>
+</main>
+
+<footer class="app-footer">
+  <p>Document Analysis Tool - Powered by LLM Technology</p>
+</footer>
+
+<script src="renderer.js"></script>
+</body>
 </html>
