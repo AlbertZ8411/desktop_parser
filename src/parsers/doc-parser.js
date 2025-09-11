@@ -15,7 +15,7 @@ class DocParser {
      * @param {Object} options
      * @returns {Promise<Object>}
      */
-    async parseDocument(filePath, options = {}) {
+    async parseFile(filePath, options = {}) {
         try {
 
             this._validateFile(filePath);
