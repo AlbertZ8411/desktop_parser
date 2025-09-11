@@ -633,28 +633,68 @@ Return this exact JSON: {"test":"success","timestamp":"now"}`;
      */
     async extractEntities(document, entityTypes = ['person', 'organization', 'location']) {
         try {
-            const systemPrompt = `You are an expert entity extraction system. Extract all ${entityTypes.join(', ')} entities from the text.`;
-            const userPrompt = `Extract all entities of these types: ${entityTypes.join(', ')}. Format your response as a JSON object with entity types as keys and arrays of unique entities as values. Text: ${document.substring(0, 8000)}`;
+            // Validate document object
+            if (!document || !document.content) {
+                throw new Error('Invalid document: missing content property');
+            }
 
-            const result = await this.llmService.query(
+            // Extract text content from document object
+            const content = document.content;
+
+            // Limit text length if needed
+            const textToAnalyze = content.length > 8000
+                ? content.substring(0, 8000)
+                : content;
+
+            const systemPrompt = `You are an expert entity extraction system. Extract all ${entityTypes.join(', ')} entities from the text.
+        
+Your response must be a valid JSON object with the following structure:
+{
+  "${entityTypes[0]}": ["entity1", "entity2", ...],
+  "${entityTypes[1]}": ["entity1", "entity2", ...],
+  ...
+}
+
+IMPORTANT: Return ONLY the JSON object, with no additional text or explanations.`;
+
+            const userPrompt = `Extract all entities of these types: ${entityTypes.join(', ')} from the following text: 
+
+${textToAnalyze}`;
+
+            // Call LLM service
+            const response = await this.llmService.query(
                 systemPrompt,
                 userPrompt,
                 { responseFormat: { type: 'json_object' } }
             );
 
-            if (!result.success) {
-                throw new Error('Entity extraction failed: ' + (result.error || 'Unknown error'));
+            // Process response
+            let entities;
+
+            // Check if response is already parsed JSON or needs parsing
+            if (typeof response === 'string') {
+                try {
+                    entities = JSON.parse(response);
+                } catch (parseError) {
+                    console.error("Failed to parse LLM response as JSON:", parseError);
+                    throw new Error('Failed to parse entity extraction results');
+                }
+            } else {
+                // Response might already be an object if LLM service returns parsed JSON
+                entities = response;
             }
 
             return {
                 success: true,
-                entities: result.data,
+                entities: entities,
                 meta: {
                     entityTypes,
-                    documentLength: document.length
+                    documentLength: content.length,
+                    timestamp: new Date().toISOString()
                 }
             };
         } catch (error) {
+            console.error("Entity extraction error:", error);
             return {
                 success: false,
                 error: error.message,
@@ -673,25 +713,53 @@ Return this exact JSON: {"test":"success","timestamp":"now"}`;
         const { maxLength = 500, format = 'paragraph' } = options;
 
         try {
-            const systemPrompt = 'You are an expert document summarizer.';
-            const userPrompt = `Summarize the following document in ${format} format. The summary should be no longer than ${maxLength} characters:\n\n${document.substring(0, 8000)}`;
+            // Validate document object
+            if (!document || !document.content) {
+                throw new Error('Invalid document: missing content property');
+            }
 
-            const result = await this.llmService.query(systemPrompt, userPrompt);
+            // Extract text content from document object
+            const content = document.content;
 
-            if (!result.success) {
-                throw new Error('Summarization failed: ' + (result.error || 'Unknown error'));
+            // Limit text length if needed
+            const textToSummarize = content.length > 8000
+                ? content.substring(0, 8000)
+                : content;
+
+            const systemPrompt = 'You are an expert document summarizer. Provide clear, concise summaries that capture the main points and key information from documents.';
+
+            const userPrompt = `Summarize the following document in ${format} format. The summary should be no longer than ${maxLength} characters:
+
+${textToSummarize}`;
+
+            // Call LLM service
+            const response = await this.llmService.query(systemPrompt, userPrompt);
+
+            // Process response
+            let summary;
+
+            // Check if response is already an object or a string
+            if (typeof response === 'object' && response.data) {
+                summary = response.data;
+            } else if (typeof response === 'string') {
+                summary = response;
+            } else {
+                throw new Error('Invalid response format from LLM service');
             }
 
             return {
                 success: true,
-                summary: result.data,
+                summary: summary,
                 meta: {
-                    originalLength: document.length,
-                    summaryLength: result.data.length,
-                    compressionRatio: document.length > 0 ? result.data.length / document.length : 0
+                    originalLength: content.length,
+                    summaryLength: summary.length,
+                    compressionRatio: content.length > 0 ? summary.length / content.length : 0,
+                    format: format,
+                    timestamp: new Date().toISOString()
                 }
             };
         } catch (error) {
+            console.error("Document summarization error:", error);
             return {
                 success: false,
                 error: error.message,
