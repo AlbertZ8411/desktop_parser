@@ -9,7 +9,10 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "echo \"No linting configured\""
+    "lint": "echo \"No linting configured\"",
+    "test": "jest --testPathIgnorePatterns=integration",
+    "test:integration": "jest --testPathPatterns=integration",
+    "test:all": "jest"
   },
   "keywords": [],
   "author": "zhualbert",
